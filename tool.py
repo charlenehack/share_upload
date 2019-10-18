@@ -321,8 +321,10 @@ def get_pic_classif(dir_path):
             file_lite = '.'.join(name_cut[0:-1])  # 兼容带'.'文件名
         else:
             file_lite = file.split('.')[0]
-        if '#' in file_lite:
+        if '#' in file_lite and '(' in file_lite:
             s_tag.add(file_lite.split('(')[0])
+        elif '#' in file_lite and '（' in file_lite:  # 兼容大写括号
+            s_tag.add(file_lite.split('（')[0])
         else:
             # elif '#' not in file_lite and '_' not in file_lite:
             s_notag.add(file_lite)
