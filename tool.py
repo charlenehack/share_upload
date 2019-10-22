@@ -165,7 +165,7 @@ def get_pic_info(file_path, article_id, resource_id=0):
     img = Image.open(file_path)
     hd_w, hd_h = img.size  # 原图宽高
     type = 'image/{}'.format(img.format).lower()  # 原图文件类型
-    preview_path = config.SAVE_PATH_TMP + file_name_lite + '_pre.' + ext  # 预览图保存路径
+    preview_path = config.SAVE_PATH_TMP + file_name_lite + '_' + hd_md5 + '_pre.' + ext  # 预览图保存路径
     preview_w, preview_h = gen_preview(file_path, preview_path)  # 生成预览图
     if os.path.isfile(preview_path):
         preview_size = os.path.getsize(preview_path)  # 预览图文件大小
@@ -176,7 +176,7 @@ def get_pic_info(file_path, article_id, resource_id=0):
         preview_md5 = hd_md5
         preview_url = hd_url
 
-    thumb_path = config.SAVE_PATH_TMP + file_name_lite + '_thu.' + ext  # 缩略图保存路径
+    thumb_path = config.SAVE_PATH_TMP + file_name_lite + '_' + hd_md5 + '_thu.' + ext  # 缩略图保存路径
     thumb_w, thumb_h = gen_thumb(file_path, thumb_path)  # 生成缩略图
     #  thumb_size = os.path.getsize(thumb_path)  # 缩略图文件大小
     thumb_md5 = get_file_md5(thumb_path)  # 缩略图md5
