@@ -298,10 +298,14 @@ def InitScan():
 def get_task_stats(folder_path):
     t = 0
     while t < 300:   # 目录超过几长时间没有修改认为写入完成
-        mtime = os.path.getmtime(folder_path)
-        t = int(time.time()) - int(mtime)
-  #      print(mtime, time.time())
-        time.sleep(60)
+        try:
+            mtime = os.path.getmtime(folder_path)
+            t = int(time.time()) - int(mtime)
+      #      print(mtime, time.time())
+            time.sleep(60)
+        except FileNotFoundError as e:
+            logging.warning('目录已被移除--> %s', folder_path)
+            return 1
     tname = current_thread().name
     logging.warning('线程：%s，开始处理--> %s' % (tname, folder_path))
     status = Worker(folder_path)
