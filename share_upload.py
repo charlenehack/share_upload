@@ -75,10 +75,13 @@ def handle_main_atta(dir, files, article_id, *key):
             if '_' in file:
                 file_path = os.path.join(dir, file)
                 logging.warning('正在处理--> %s', file_path)
-                s_data, preview_path, thumb_path = tool.get_pic_info(file_path, article_id, resource_id)
-                response = requests.post('http://service.wow-trend.us/api/crawler/upload-article/resource/create', data=json.dumps(s_data), headers=headers)
-                items = json.loads(response.text)['data']['items']
-                tool.move_to_upload_folder(file_path, preview_path, thumb_path, items)
+                try:
+                    s_data, preview_path, thumb_path = tool.get_pic_info(file_path, article_id, resource_id)
+                    response = requests.post('http://service.wow-trend.us/api/crawler/upload-article/resource/create', data=json.dumps(s_data), headers=headers)
+                    items = json.loads(response.text)['data']['items']
+                    tool.move_to_upload_folder(file_path, preview_path, thumb_path, items)
+                except Exception as e:
+                    logging.warning('处理副图错误。--> %s', file_path)
 
 def Worker(folder_path):
     menu_key, folder = folder_path.split('/')[4:6]
@@ -303,7 +306,7 @@ def get_task_stats(folder_path):
             t = int(time.time()) - int(mtime)
       #      print(mtime, time.time())
             time.sleep(60)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             logging.warning('目录已被移除--> %s', folder_path)
             return 1
     tname = current_thread().name

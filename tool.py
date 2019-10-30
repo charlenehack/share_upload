@@ -115,7 +115,7 @@ def gen_preview(path, save_path):
             preview_img.save(save_path, type)
             return preview_w, preview_h
     except Exception as e:
-        logger().info('预览图生成失败--> %s，error：%s' % (path, e))
+        logger().warning('预览图生成失败--> %s，error：%s' % (path, e))
     return img.width, img.height   # 不满足预览图生成条件返回原图
 
 def gen_thumb(path, save_path):
@@ -137,7 +137,7 @@ def gen_thumb(path, save_path):
         thumb_img.save(save_path, type)
         return  thumb_w, thumb_h
     except Exception as e:
-        logger().info('缩略图生成失败--> %s，error：%s' % (path, e))
+        logger().warning('缩略图生成失败--> %s，error：%s' % (path, e))
 
 def get_pic_info(file_path, article_id, resource_id=0):
     '''
@@ -156,7 +156,7 @@ def get_pic_info(file_path, article_id, resource_id=0):
     else:
         file_name_lite = file_name.split('.')[0]  # 原图名filename
     ext = file_path.split('.')[-1]  # 原图扩展名
-    if ext not in ['bmp', 'png', 'gif']:
+    if ext not in ['bmp', 'png', 'gif', 'BMP', 'PNG', 'GIF']:
         piexif.remove(file_path)  # 去原图数字水印
     hd_size = os.path.getsize(file_path)  # 原图文件大小
     hd_md5 = get_file_md5(file_path)  # 原图md5
@@ -335,7 +335,7 @@ def get_pic_classif(dir_path):
         for file in l:
             if lite in file:
                 ext = file.split('.')[-1]
-                if ext in ['jpg', 'png'] and '_' not in file:
+                if ext in ['jpg', 'png', 'JPG', 'PNG'] and '_' not in file:
                     files_tag[lite].insert(0, file)  # 优先处理主图
                 else:
                     files_tag[lite].append(file)
@@ -346,7 +346,7 @@ def get_pic_classif(dir_path):
         for file in l:
             if lite in file:
                 ext = file.split('.')[-1]
-                if ext in ['jpg', 'png']:
+                if ext in ['jpg', 'png', 'JPG', 'PNG']:
                     if file == lite + '.' + ext:
                         files_notag[lite].insert(0, file)  # 优先处理主图
                     elif '_' in file and file.split(lite)[1].startswith('_'):  # 兼容带'_'文件名
