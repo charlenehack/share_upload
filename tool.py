@@ -265,6 +265,7 @@ def move_to_upload_folder(hd_path, preview_path, thumb_path, items, *vect_path):
     is_exist = items['hdfile']['is_exist']
     if not is_exist:
         move_path = os.path.join(config.SAVE_PATH, items['hdfile']['path'])
+        s = os.path.getsize(hd_path)
         shutil.copy(hd_path, move_path)
 
     is_exist = items['preview']['is_exist']

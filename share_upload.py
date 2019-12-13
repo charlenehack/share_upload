@@ -87,7 +87,7 @@ def Worker(folder_path):
     menu_key, folder = folder_path.split('/')[4:6]
 
     #### 处理印花图库栏目
-    if menu_key == '印花图库':
+    if menu_key in ['印花图库', '素材库']:
         article_id = 0
         files_tag, files_notag, files = tool.get_pic_classif(folder_path)
         if files_tag:
@@ -103,6 +103,10 @@ def Worker(folder_path):
                     data['folder_name'] = folder
                     data['menu_key'] = menu_key
                     response = requests.post('http://service.wow-trend.us/api/crawler/upload-article/resource/create', data=json.dumps(data), headers=headers)
+                    dic_res = json.loads(response.text)
+                    if dic_res['status_code'] != 200:
+                        logging.warning('图片处理失败，code：%s，error：%s' % (dic_res['status_code'], dic_res['message']))
+                        return 1
                     items = json.loads(response.text)['data']['items']
                     tool.move_to_upload_folder(file_path, preview_path, thumb_path, items)
                 except Exception as e:
