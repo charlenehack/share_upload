@@ -288,8 +288,14 @@ def Worker(folder_path):
                         logging.warning('正在处理--> %s', file_path)
                         try:
                             data, preview_path, thumb_path = tool.get_pic_info(file_path, article_id)
+                            data['folder_name'] = folder
+                            data['menu_key'] = menu_key
                             response = requests.post('http://service.wow-trend.us/api/crawler/upload-article/resource/create', data=json.dumps(data), headers=headers)
-                            items = json.loads(response.text)['data']['items']
+                            dic_res = json.loads(response.text)
+                            if dic_res['status_code'] != 200:
+                                logging.warning('图片处理失败，code：%s，error：%s' % (dic_res['status_code'], dic_res['message']))
+                                continue
+                            items = dic_res['data']['items']
                             tool.move_to_upload_folder(file_path, preview_path, thumb_path, items)
                         except Exception as e:
                             logging.warning('图片处理错误，文件：%s，error：%s' % (file_path, e))
