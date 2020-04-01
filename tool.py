@@ -384,3 +384,34 @@ def get_video_info(file_path):
         'mime': type
     }
     return item
+
+def add_water(img_path, text):
+    '''
+    图片添加水印
+    :param img_path: 原图路径
+    :param text: 水印文字
+    :return: 加水印后图片路径
+    '''
+    if not text:
+        return img_path
+    text = '图片源自：@' + text
+    filename = img_path.split('/')[-1].split('.')[0]
+    im = Image.open(img_path).convert('RGBA')
+    font = ImageFont.truetype('msyh.ttf', 16)   # 设置字体及大小
+    over = Image.new('RGBA', im.size, (255, 255, 255, 0))   # 按原图尺寸新建白色透明画布
+    im_draw = ImageDraw.Draw(over)  # 画布绘制水印图
+
+    text_size_x, text_size_y = im_draw.textsize(text, font=font)
+    text_xy = (im.size[0] - text_size_x - 5, im.size[1] - text_size_y - 5)  # 计算水印位置
+    im_draw.text(text_xy, text, font=font, fill=(255, 255, 255, 80))   # 设置水印字体颜色及透明度
+    out = Image.alpha_composite(im, over)
+  #  out.show()
+    tmp_path = config.SAVE_PATH_TMP + filename + '.png'
+    out.save(tmp_path)
+    img = Image.open(tmp_path)
+    bg = Image.new('RGB', img.size, (255, 255, 255))  # 按相同尺寸新建RGB画布
+    bg.paste(img, img)   # RGB粘贴原画
+    save_path = config.SAVE_PATH + filename + '.jpg'
+    bg.save(save_path)
+
+    return save_path
