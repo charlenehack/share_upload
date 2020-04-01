@@ -1,4 +1,4 @@
-import  rsa, config, hashlib, os, time, shutil, logging, piexif, chardet, logging.handlers, cv2
+import  rsa, config, hashlib, os, time, shutil, logging, piexif, chardet, logging.handlers, cv2, re
 from PIL import Image
 
 def rsaEncrypt(str):
@@ -301,88 +301,44 @@ def get_pic_classif(dir_path):
     '''
     将目录内文件进行分类
     :param dir_path: 目录路径
-    :return: 带标签文件字典，不带标签文件字典，单个文件列表
+    :return: 分类结果
     '''
-    s_tag = set()  # 存放带标签文件关键字
-    s_notag = set()  # 存放不带标签文件关键字
-    l = list()  # 存放目录内所有文件
-    files_tag = dict()  # 存放根据不带标签关键字匹配的对应文件信息
-    files_notag = dict()  # 存放根据不带标签关键字匹配的对应文件信息
-    l_single = list()  # 存放无主副图及附加信息的单个文件
-    l_line = list()  # 存放带下划线的副图
+    l_main = list()    # 存放主图
+    l_atta = list()    # 存放副图
+    files = dict()     # 存放整理后主副图关系
+    ext = ['_', '.eps', '.ai', '.psd', '.txt', '.EPS', '.AI', '.PSD', '.TXT']
 
-    [l.append(item) for item in os.listdir(dir_path)]
-
-    ## 分别获取带标签和不带标签字典key
     for file in os.listdir(dir_path):
         if file.startswith('.') or file.endswith('db'):
             continue
-        name_cut = file.split('.')
-        if len(name_cut) > 2:
-            file_lite = '.'.join(name_cut[0:-1])  # 兼容带'.'文件名
+        if '_' in file and not file.split('.')[0].split('_')[-1].isdigit():  # 兼容带下划线文件名
+            l_main.append(file)
+        elif any(k in file for k in ext):   # 带副图关键字加入列表
+            l_atta.append(file)
         else:
-            file_lite = file.split('.')[0]
-        if '#' in file_lite and '(' in file_lite:
-            s_tag.add(file_lite.split('(')[0])
-        elif '#' in file_lite and '（' in file_lite:  # 兼容大写括号
-            s_tag.add(file_lite.split('（')[0])
+            l_main.append(file)
+
+    if len(l_atta) == 0:    # 若副图列表为空说明无主副图关系，直接返回
+        return l_main
+
+    for file in l_main:
+        if '(' in file:
+            lite = file.split('(')[0]
+        elif '（' in file:
+            lite = file.split('（')[0]
         else:
-            # elif '#' not in file_lite and '_' not in file_lite:
-            s_notag.add(file_lite)
+            name_cut = file.split('.')
+            if len(name_cut) > 2:
+                lite = '.'.join(name_cut[0:-1])  # 兼容带'.'文件名
+            else:
+                lite = file.split('.')[0]
+        files[lite] = list()
+        files[lite].insert(0, file)
+        for f in l_atta:
+            if any(lite + k in f for k in ext):
+                files[lite].append(f)
 
-    ## 获取带标签字典key对应的value
-    for lite in s_tag:
-        files_tag[lite] = list()
-        for file in l:
-            if lite in file:
-                ext = file.split('.')[-1]
-                if ext in ['jpg', 'png', 'JPG', 'PNG'] and '_' not in file:
-                    files_tag[lite].insert(0, file)  # 优先处理主图
-                else:
-                    files_tag[lite].append(file)
-
-    ## 获取不带标签字典key对应的value
-    for lite in s_notag:
-        files_notag[lite] = list()
-        for file in l:
-            if lite in file:
-                ext = file.split('.')[-1]
-                if ext in ['jpg', 'png', 'JPG', 'PNG']:
-                    if file == lite + '.' + ext:
-                        files_notag[lite].insert(0, file)  # 优先处理主图
-                    elif '_' in file and file.split(lite)[1].startswith('_'):  # 兼容带'_'文件名
-                        files_notag[lite].append(file)
-                else:
-                    files_notag[lite].append(file)
-
-    ## 剔除带标签和不带标签字典中的单文件
-    for k in list(files_notag):
-        if len(files_notag[k]) == 1:
-            l_single.append(files_notag[k][0])
-            files_notag.pop(k)  # 剔除单元素
-
-    for k in list(files_tag):
-        if len(files_tag[k]) == 1:
-            l_single.append(files_tag[k][0])
-            files_tag.pop(k)
-
-    ## 获取带标签和不带标签字典中带下划线的副图
-    for k in list(files_notag):
-        for file in files_notag[k]:
-            if '_' in file:
-                l_line.append(file)
-            if '#' in file:
-                files_notag.pop(k)  # 剔除带标签文件
-
-    for k in list(files_tag):
-        for file in files_tag[k]:
-            if '_' in file:
-                l_line.append(file)
-
-    l_after = list(set(l_single).difference(set(l_line)))   # 除去单文件中带下划线的副图
-
-
-    return files_tag, files_notag, l_after
+    return files
 
 def get_video_cap(file_path):
     '''

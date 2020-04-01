@@ -22,20 +22,22 @@ def handle_main_atta(dir, files, article_id, *key):
         data = dict()   # 存放主图、矢量图及keywords信息
         ### 处理主图及附加信息
         for file in files[item]:
+            if '_' in file:
+                continue
             file_path = os.path.join(dir, file)
             filename, ext = file.split('.')[0:2]
             logging.warning('正在处理--> %s', file_path)
             vect_path = None
             #### 拼接主图、矢量图、keywords传参
             try:
-                if ext in ['jpg', 'png', 'JPG', 'PNG'] or '#' in filename and '_' not in filename:
+                if ext in ['jpg', 'png', 'JPG', 'PNG', 'jpeg', 'JEPG'] or '#' in filename:
                     m_data, preview_path, thumb_path = tool.get_pic_info(file_path, article_id)
                     hd_path = file_path
                     data.update(m_data)
-                if ext == 'txt':
+                if ext in ['txt', 'TXT']:
                     keywords = tool.get_pic_atta(file_path)
                     data['keywords'] = keywords
-                if ext in ['eps', 'ai', 'psd']:
+                if ext in ['eps', 'ai', 'psd', 'EPS', 'AI', 'PSD']:
                     vect_path = file_path
                     items = tool.get_pic_atta(file_path)
                     data['items'][ext] = items
@@ -74,7 +76,7 @@ def handle_main_atta(dir, files, article_id, *key):
         for file in files[item]:
             if '_' in file:
                 file_path = os.path.join(dir, file)
-                logging.warning('正在处理--> %s', file_path)
+                logging.warning('正在处理副图--> %s', file_path)
                 try:
                     s_data, preview_path, thumb_path = tool.get_pic_info(file_path, article_id, resource_id)
                     response = requests.post('http://service.wow-trend.us/api/crawler/upload-article/resource/create', data=json.dumps(s_data), headers=headers)
@@ -89,12 +91,10 @@ def Worker(folder_path):
     #### 处理印花图库栏目
     if menu_key in ['印花图库', '素材库']:
         article_id = 0
-        files_tag, files_notag, files = tool.get_pic_classif(folder_path)
-        if files_tag:
-            handle_main_atta(folder_path, files_tag, article_id, [folder, menu_key])
-        if files_notag:
-            handle_main_atta(folder_path, files_notag, article_id, [folder, menu_key])
-        if files:
+        files = tool.get_pic_classif(folder_path)
+        if isinstance(files, dict):
+            handle_main_atta(folder_path, files, article_id, [folder, menu_key])
+        if isinstance(files, list):
             for file in files:
                 file_path = os.path.join(folder_path, file)
                 logging.warning('正在处理--> %s', file_path)
@@ -200,13 +200,10 @@ def Worker(folder_path):
                         ## 处理版面目录更多图片
                         if not os.path.exists(more_dir_path):
                             continue
-                        files_tag, files_notag, files = tool.get_pic_classif(more_dir_path)
-                      #  print(files_tag, files_notag, files)
-                        if files_tag:
-                            handle_main_atta(more_dir_path, files_tag, article_id, ['book', page_id_sub, group_id])
-                        if files_notag:
-                            handle_main_atta(more_dir_path, files_notag, article_id, ['book', page_id_sub, group_id])
-                        if files:
+                        files = tool.get_pic_classif(more_dir_path)
+                        if isinstance(files, dict):
+                             handle_main_atta(more_dir_path, files, article_id, ['book', page_id_sub, group_id])
+                        if isinstance(files, list):
                             for more_file in files:
                                 more_file_path = os.path.join(more_dir_path, more_file)
                                 logging.warning('正在处理--> %s', more_file_path)
@@ -252,12 +249,10 @@ def Worker(folder_path):
                     group_id = dic_res['data']['group_id']
                     article_id = dic_res['data']['article_id']
                     dir = os.path.join(folder_path, folder_name)
-                    files_tag, files_notag, files = tool.get_pic_classif(dir)
-                    if files_tag:
-                        handle_main_atta(dir, files_tag, article_id)
-                    if files_notag:
-                        handle_main_atta(dir, files_notag, article_id)
-                    if files:
+                    files = tool.get_pic_classif(dir)
+                    if isinstance(files, dict):
+                        handle_main_atta(dir, files, article_id)
+                    if isinstance(files, list):
                         for file in files:
                             file_path = os.path.join(dir, file)
                             logging.warning('正在处理--> %s', file_path)
@@ -277,12 +272,10 @@ def Worker(folder_path):
                                 logging.warning('图片处理失败-->%s，error：%s' % (file_path, e))
             ### 处理图片集
             else:
-                files_tag, files_notag, files = tool.get_pic_classif(folder_path)
-                if files_tag:
-                    handle_main_atta(folder_path, files_tag, article_id)
-                if files_notag:
-                    handle_main_atta(folder_path, files_notag, article_id)
-                if files:
+                files = tool.get_pic_classif(folder_path)
+                if isinstance(files, dict):
+                    handle_main_atta(folder_path, files, article_id)
+                if isinstance(files, list):
                     for file in files:
                         file_path = os.path.join(folder_path, file)
                         logging.warning('正在处理--> %s', file_path)
@@ -329,7 +322,7 @@ def get_task_stats(folder_path):
             shutil.rmtree(folder_path)
         except Exception as e:
             logging.warning('备份或移除目录错误--> %s，error：%s' % (folder_path, e))
-            if 'already exists' in str(e):
+            if 'exists' in str(e):
                 logging.warning('备份目录已存在--> %s', folder_path)
                 shutil.rmtree(folder_path)
         finally:
