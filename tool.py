@@ -32,12 +32,13 @@ def logger():
     logger = logging.getLogger()
     fmt_str = '%(asctime)s %(message)s'
 
-    fileshandle = logging.handlers.TimedRotatingFileHandler('logs/upload.log', when='D', interval=1)
-    fileshandle.suffix = "%Y-%m-%d"
-    fileshandle.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(fmt_str)
-    fileshandle.setFormatter(formatter)
-    logger.addHandler(fileshandle)
+    if not logger.handlers:    # 避免重复打印日志
+        fileshandle = logging.handlers.TimedRotatingFileHandler('logs/upload.log', when='D', interval=1)
+        fileshandle.suffix = "%Y-%m-%d"
+        fileshandle.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(fmt_str)
+        fileshandle.setFormatter(formatter)
+        logger.addHandler(fileshandle)
 
 def get_file_md5(file):
     '''
