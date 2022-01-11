@@ -416,3 +416,79 @@ def add_water(img_path, text):
     bg.save(save_path)
 
     return save_path
+
+def add_water(img_path):
+    '''
+    趋势书籍打包图片添加水印
+    :param img_path: 图片路径
+    '''
+    img = Image.open(img_path)
+    if img.width <= 700:
+        mask_path = config.WORK_DIR + 'mask/w600.png'
+    if img.width > 700 and img.width <= 800:
+        mask_path = config.WORK_DIR + 'mask/w700.png'
+    if img.width > 800 and img.width <= 900:
+        mask_path = config.WORK_DIR + 'mask/w800.png'
+    if img.width > 900 and img.width <= 1000:
+        mask_path = config.WORK_DIR + 'mask/w900.png'
+    if img.width > 1000 and img.width <= 1200:
+        mask_path = config.WORK_DIR + 'mask/w1000.png'
+    if img.width > 1200 and img.width <= 1400:
+        mask_path = config.WORK_DIR + 'mask/w1200.png'
+    if img.width > 1400 and img.width <= 1600:
+        mask_path = config.WORK_DIR + 'mask/w1400.png'
+    if img.width > 1600 and img.width <= 2000:
+        mask_path = config.WORK_DIR + 'mask/w1600.png'
+    if img.width > 2000 and img.width <= 2300:
+        mask_path = config.WORK_DIR + 'mask/w2000.png'
+    if img.width > 2300:
+        mask_path = config.WORK_DIR + 'mask/w2300.png'
+    water = Image.open(mask_path)
+    layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    layer.paste(water, (img.width - water.width - 10, img.height - water.height - 10))
+    out = Image.composite(layer, img, layer)
+  #  out.show()
+    save_path = img_path.replace('upload_new/趋势书籍', 'trendbook-with-mask')
+    path_dir = os.path.dirname(save_path)
+    if not os.path.exists(path_dir):
+        os.makedirs(path_dir)
+    ext = img_path.split('.')[-1]
+    if ext.lower() == 'jpg':
+        img_fmt = 'jpeg'
+    else:
+        img_fmt = ext.lower()
+
+    if ext.lower() in ['jpg', 'jpeg', 'png', 'bmp', 'webp']:
+        out.save(save_path, img_fmt)
+    else:
+        shutil.copy(img_path, save_path)
+
+def book_zip(folder_path):
+    '''
+    目录打包并移动至上传目录
+    :param folder_path: 打包目录路径
+    :return uri路径
+    '''
+    date = time.strftime(('%Y%m%d%H%M%S'), time.localtime())
+    zip_name = folder_path.split('标题_')[1].split('#')[0] + '_' + date
+    zip_path = config.SAVE_PATH_TMP + zip_name
+    shutil.make_archive(zip_path, 'zip', root_dir=folder_path)
+    daydir = get_day_folder()
+    save_path = config.SAVE_PATH + daydir
+    shutil.move(zip_path + '.zip',  save_path)
+
+    return daydir + '/' + zip_name + '.zip'
+
+def del_qiniu_file(file_path):
+    '''
+    删除七牛文件
+    :param file_path: 文件名
+    '''
+    from qiniu import BucketManager, Auth
+
+    access_key = 'GvK_YQ4FMj8hbdCB5ARBF_BD1EJqokF_fA5FhB6P'
+    secret_key = 'rOQKoyyU2UhNo5p1U0QLm247q2pKsQHCq-2GLMa2'
+    q = Auth(access_key, secret_key)
+    bucket = BucketManager(q)
+    bucket_name = 'wow-img'
+    bucket.delete(bucket_name, file_path)
